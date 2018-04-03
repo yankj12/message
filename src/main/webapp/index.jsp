@@ -1,61 +1,67 @@
-<%@ page language="java" import="java.util.*" pageEncoding="utf-8"%>
-<%
-String path = request.getContextPath();
-String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+path+"/";
-%>
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<%@ page language="java" pageEncoding="UTF-8" %>
+<!DOCTYPE html>
 <html>
-  <head>
-    <base href="<%=basePath%>">
+<head>
+    <title>Java后端WebSocket的Tomcat实现</title>
+</head>
+<body>
+    Welcome<br/><input id="text" type="text"/>
+    <button onclick="send()">发送消息</button>
+    <hr/>
+    <button onclick="closeWebSocket()">关闭WebSocket连接</button>
+    <hr/>
+    <div id="message"></div>
+</body>
 
-    <title>My JSP 'index.jsp' starting page</title>
-    <meta http-equiv="pragma" content="no-cache">
-    <meta http-equiv="cache-control" content="no-cache">
-    <meta http-equiv="expires" content="0">    
-    <meta http-equiv="keywords" content="keyword1,keyword2,keyword3">
-    <meta http-equiv="description" content="This is my page">
-    <!--
-    <link rel="stylesheet" type="text/css" href="styles.css">
-    -->
-    <script type="text/javascript">
-var socket = new WebSocket("ws://localhost:8080/message/aa.do?aaa=11");
-socket.onopen = function(){
-    //浏览器socket开始进入
-    console.log("open");
-    //向服务器端发送信息
-    socket.send("open+hello");
-};
-socket.onmessage = function(evt)
-{
-    console.log("message");
-    console.log("onmessage:"+evt.data);
-};
-socket.onclose = function(evt){
-    console.log("close");
-    console.log("onclose:"+evt.data);
-};
-socket.onerror = function(evt)
-{
-    console.log("error");
-    console.log("onerror:"+evt.data);
-};
-function send()
-{
-    //socket.send("sendMessage");
-}
-function closeWebSocket(){
-     socket.close();
-}
+<script type="text/javascript">
+    var websocket = null;
+    //判断当前浏览器是否支持WebSocket
+    if ('WebSocket' in window) {
+        websocket = new WebSocket("ws://localhost:8080/message/websocket");
+    }
+    else {
+        alert('当前浏览器 Not support websocket')
+    }
 
+    //连接发生错误的回调方法
+    websocket.onerror = function () {
+        setMessageInnerHTML("WebSocket连接发生错误");
+    };
+
+    //连接成功建立的回调方法
+    websocket.onopen = function () {
+        setMessageInnerHTML("WebSocket连接成功");
+    }
+
+    //接收到消息的回调方法
+    websocket.onmessage = function (event) {
+        setMessageInnerHTML(event.data);
+    }
+
+    //连接关闭的回调方法
+    websocket.onclose = function () {
+        setMessageInnerHTML("WebSocket连接关闭");
+    }
+
+    //监听窗口关闭事件，当窗口关闭时，主动去关闭websocket连接，防止连接还没断开就关闭窗口，server端会抛异常。
+    window.onbeforeunload = function () {
+        closeWebSocket();
+    }
+
+    //将消息显示在网页上
+    function setMessageInnerHTML(innerHTML) {
+        document.getElementById('message').innerHTML += innerHTML + '<br/>';
+    }
+
+    //关闭WebSocket连接
+    function closeWebSocket() {
+        websocket.close();
+    }
+
+    //发送消息
+    function send() {
+        var message = document.getElementById('text').value;
+        websocket.send(message);
+    }
 </script>
-  </head>
-
-  <body>
-    This is my JSP page. <br>
-     Welcome<br/>
-   <button onclick="send()">Send</button>    <button onclick="closeWebSocket()">Close</button>
-    <div id="message">
-    </div>
-  </body>
 </html>
